@@ -165,7 +165,7 @@ O objetivo deste dashboard (Challenge Analytics) foi construir visualizações q
 ---
 **Referências**
 - World Bank API: https://api.worldbank.org
-- GitHub: repositório do Challenge Analytics
+- GitHub: https://github.com/ndesouz1/Dashboard-de-Conectividade-e-Economia-na-Argentina
 '''            )
         ], style={"lineHeight": "1.6", "fontSize": "16px"})
 
