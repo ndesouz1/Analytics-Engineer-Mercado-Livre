@@ -1,0 +1,4 @@
+moeda_base,moeda_destino,valor_compra,valor_venda,data_utc
+USD,BRL,5.7432,5.7462,2025-05-07 22:04:58
+EUR,BRL,6.48508,6.50195,2025-05-07 22:04:58
+BTC,BRL,559430,559431,2025-05-07 22:04:58
