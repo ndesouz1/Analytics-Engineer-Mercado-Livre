@@ -5,7 +5,7 @@ from dash import Dash, dcc, html, Input, Output
 import plotly.graph_objs as go
 import numpy as np
 
-# Configuração do Dash
+
 indicadores = {
     "Internet (% população)": "IT.NET.USER.ZS",
     "Banda Larga Fixa (por 100 hab.)": "IT.NET.BBND.P2",
@@ -13,8 +13,8 @@ indicadores = {
     "PIB per capita (US$ atuais)": "NY.GDP.PCAP.CD"
 }
 
-# Função para carregar os dados do indicador
-def carregar_indicador(codigo):
+# Função para obter dados da API do Banco Mundial
+def obter_dados(codigo):
     url = f"https://api.worldbank.org/v2/country/AR/indicator/{codigo}?format=json&per_page=2000"
     resposta = requests.get(url)
     resposta.raise_for_status()
@@ -28,22 +28,25 @@ def carregar_indicador(codigo):
         return df.sort_values("Ano")
     return pd.DataFrame(columns=["Ano", "Valor"])
 
+# Carregando os dados para cada indicador
 series = []
 for nome, codigo in indicadores.items():
-    df = carregar_indicador(codigo)
+    df = obter_dados(codigo)
     df = df.rename(columns={"Valor": nome})
     series.append(df)
 
-# Unindo os dados em um único DataFrame
+# Unificando os dados em um único DataFrame
 dados_unificados = reduce(lambda a, b: pd.merge(a, b, on="Ano", how="outer"), series).sort_values("Ano")
 dados_unificados["Internet Δ%"] = dados_unificados["Internet (% população)"].pct_change() * 100
 
-# Adicionando a coluna de crescimento percentual para Banda Larga Fixa e Assinaturas Móveis
+# Estilos globais
 estilo_layout = dict(
     template="plotly_white",
     colorway=["#1f77b4", "#ff7f0e", "#2ca02c"],
     font=dict(family="Arial", size=12)
 )
+
+# Estilos para os cards
 estilo_card = {
     "flex": 1, "padding": "10px", "border": "1px solid #ccc",
     "borderRadius": "8px", "textAlign": "center"
@@ -52,7 +55,7 @@ estilo_card = {
 # Inicializando o aplicativo Dash
 app = Dash(__name__, title="Argentina: Conectividade & Economia")
 
-# Definindo o layout do aplicativo
+# Layout do aplicativo
 app.layout = html.Div([
     html.H1("Dashboard: Conectividade e Economia na Argentina", style={"textAlign": "center", "marginTop": "20px"}),
     html.Div(id="indicadores-destaque", style={"display": "flex", "gap": "10px", "marginBottom": "20px"}),
@@ -72,8 +75,8 @@ app.layout = html.Div([
     html.Div(id="conteudo-aba", style={"padding": "20px"})
 ], style={"maxWidth": "900px", "margin": "0 auto"})
 
-# Função para gerar os KPIs
-def gerar_kpis(intervalo_anos):
+# Função para atualizar os indicadores-chave
+def indicadores_chave(intervalo_anos):
     dados = dados_unificados[(dados_unificados.Ano >= intervalo_anos[0]) & (dados_unificados.Ano <= intervalo_anos[1])]
     def ultimo_valor(coluna, sufixo=""):
         serie = dados[coluna].dropna()
@@ -84,11 +87,11 @@ def gerar_kpis(intervalo_anos):
         html.Div([html.H3(ultimo_valor("Assinaturas Móveis (por 100 hab.)")), html.P("Assinaturas Móveis /100 hab.")], style=estilo_card)
     ]
 
-# Atualizando os KPIs com o intervalo de anos selecionado
-app.callback(Output("indicadores-destaque", "children"), Input("seletor-anos", "value"))(gerar_kpis)
+# Atualizando os indicadores-chave com base no intervalo de anos selecionado
+app.callback(Output("indicadores-destaque", "children"), Input("seletor-anos", "value"))(indicadores_chave)
 
 # Função para exibir o conteúdo da aba selecionada
-def exibir_conteudo(aba, intervalo_anos):
+def renderizar_aba(aba, intervalo_anos):
     dados = dados_unificados[(dados_unificados.Ano >= intervalo_anos[0]) & (dados_unificados.Ano <= intervalo_anos[1])]
     if aba == "visao_geral":
         fig = go.Figure(layout=estilo_layout)
@@ -154,7 +157,7 @@ O objetivo deste dashboard foi construir visualizações que contem a evolução
 2. Forte correlação entre PIB per capita e acesso à internet.
 3. Desafio futuro: qualidade e cobertura rural.
 
-> "A internet deixou de ser luxo para alicerce estratégico de desenvolvimento."  
+> "A internet deixou de ser luxo para alicerce estratégico de desenvolvimento na Argentina."  
 > — *Nayara de Souza*
 '''
             )
@@ -164,7 +167,7 @@ app.callback(
     Output("conteudo-aba", "children"),
     Input("abas", "value"),
     Input("seletor-anos", "value")
-)(exibir_conteudo)
+)(renderizar_aba)
 
 if __name__ == "__main__":
     app.run(debug=True)

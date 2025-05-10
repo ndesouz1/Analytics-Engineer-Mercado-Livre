@@ -3,14 +3,14 @@ import json
 import csv
 from datetime import datetime, timezone 
 
-# Extrai dados de moedas de uma API e salva em arquivos CSV
-def consumir_api():
+# Função para buscar dados de moedas da API
+def obter_dados_moedas():
     url = "https://economia.awesomeapi.com.br/last/USD-BRL,EUR-BRL,BTC-BRL"
-    with urllib.request.urlopen(url) as response:
-        data = response.read().decode()
-        return json.loads(data)
+    with urllib.request.urlopen(url) as resposta:
+        dados = resposta.read().decode()
+        return json.loads(dados)
 
-# Normaliza os dados extraídos da API para um formato mais simples
+# Função para normalizar os dados para um formato simples
 def normalizar_dados(dados):
     moedas = []
     for valor in dados.values():
@@ -24,7 +24,7 @@ def normalizar_dados(dados):
         moedas.append(moeda)
     return moedas
 
-# Normaliza os dados extraídos da API para um formato mais complexo
+# Função para desnormalizar os dados para um formato mais detalhado
 def desnormalizar_dados(dados):
     moedas = []
     for valor in dados.values():
@@ -44,21 +44,23 @@ def desnormalizar_dados(dados):
         moedas.append(moeda)
     return moedas
 
-# Salva os dados normalizados em um arquivo CSV
+# Função para salvar os dados em um arquivo CSV
 def salvar_csv(dados, nome_arquivo, campos):
     with open(nome_arquivo, 'w', newline='', encoding='utf-8') as file:
-        writer = csv.DictWriter(file, fieldnames=campos)
-        writer.writeheader()
-        writer.writerows(dados)
+        escritor = csv.DictWriter(file, fieldnames=campos)
+        escritor.writeheader()
+        escritor.writerows(dados)
 
-# Main function to execute the script
-def main():
-    dados_api = consumir_api()
+# Função principal para executar o script
+def executar():
+    dados_api = obter_dados_moedas()
 
+    # Normalizados dados e salvando em CSV
     dados_normalizados = normalizar_dados(dados_api)
     campos_normalizados = ["moeda_base", "moeda_destino", "valor_compra", "valor_venda", "data_utc"]
     salvar_csv(dados_normalizados, "dados_moedas.csv", campos_normalizados)
 
+    # Desnormalizados dados e salvando em CSV
     dados_desnormalizados = desnormalizar_dados(dados_api)
     campos_desnormalizados = [
         "moeda_base", "moeda_destino", "valor_compra", "valor_venda",
@@ -67,7 +69,8 @@ def main():
     ]
     salvar_csv(dados_desnormalizados, "dados_moedas_desnormalizado.csv", campos_desnormalizados)
 
-    print("Arquivos gerados: dados_moedas.csv e dados_moedas_desnormalizado.csv")
+    print("Arquivos gerados com sucesso: dados_moedas.csv e dados_moedas_desnormalizado.csv")
+
 
 if __name__ == "__main__":
-    main()
+    executar()
