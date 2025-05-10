@@ -58,6 +58,6 @@ erDiagram
         DATE    data_nascimento
     }
 
-    Cliente }|..|{ AniversarioCliente : "view sobre aniversariantes"
+    Cliente }|..|{ AniversarioCliente : "view dos aniversariantes"
 
 ```

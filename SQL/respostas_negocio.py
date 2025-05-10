@@ -1,16 +1,16 @@
 import sqlite3
 from datetime import datetime
 
-DATABASE_NAME = 'desafio.db'
-SNAPSHOT_TABLE_NAME = 'ItemSnapshot'
+NOME_BANCO = 'desafio.db'
+NOME_TABELA_HISTORICO = 'HistoricoItem'
 
-# Função para criar a tabela ItemSnapshot se não existir
-def criar_tabela_item_snapshot():
-    conn = sqlite3.connect(DATABASE_NAME)
-    cursor = conn.cursor()
+# Cria a tabela de histórico dos itens, caso ainda não exista
+def criar_tabela_historico_itens():
+    conexao = sqlite3.connect(NOME_BANCO)
+    cursor = conexao.cursor()
 
     cursor.execute(f'''
-        CREATE TABLE IF NOT EXISTS {SNAPSHOT_TABLE_NAME} (
+        CREATE TABLE IF NOT EXISTS {NOME_TABELA_HISTORICO} (
             item_id INTEGER PRIMARY KEY,
             data_atualizacao DATETIME NOT NULL,
             preco REAL NOT NULL,
@@ -19,49 +19,42 @@ def criar_tabela_item_snapshot():
         )
     ''')
 
-    conn.commit()
-    conn.close()
-    print(f"Tabela '{SNAPSHOT_TABLE_NAME}' criada com sucesso (se não existia).")
+    conexao.commit()
+    conexao.close()
+    
 
-# Função para popular a tabela ItemSnapshot com os dados atuais dos itens
-def povoar_item_snapshot():
-    conn = sqlite3.connect(DATABASE_NAME)
-    cursor = conn.cursor()
+# Insere ou atualiza o histórico com o preço e status mais recentes dos itens
+def atualizar_historico_itens():
+    conexao = sqlite3.connect(NOME_BANCO)
+    cursor = conexao.cursor()
 
-    # Criar a tabela ItemSnapshot se não existir
-    criar_tabela_item_snapshot()
+    criar_tabela_historico_itens()
 
-    # Buscar o preço mais recente e o status atual de cada item
     cursor.execute('''
         SELECT
             i.item_id,
-            STRFTIME('%Y-%m-%d %H:%M:%S', 'now'),
+            STRFTIME('%Y-%m-%d %H:%M:%S', 'now') AS data_atualizacao,
             (SELECT preco_unitario FROM Pedido WHERE item_id = i.item_id ORDER BY data_pedido DESC LIMIT 1),
             i.status
         FROM
-            Item i;
+            Item i
     ''')
-    itens_info = cursor.fetchall()
+    dados_itens = cursor.fetchall()
 
-    # Inserir ou atualizar os dados na tabela ItemSnapshot
-    for item_id, data_atualizacao, preco, estado in itens_info:
+    for item_id, data_atualizacao, preco, estado in dados_itens:
         cursor.execute(f'''
-            INSERT OR REPLACE INTO {SNAPSHOT_TABLE_NAME} (item_id, data_atualizacao, preco, estado)
+            INSERT OR REPLACE INTO {NOME_TABELA_HISTORICO} (item_id, data_atualizacao, preco, estado)
             VALUES (?, ?, ?, ?)
         ''', (item_id, data_atualizacao, preco, estado))
 
-    conn.commit()
-    conn.close()
-    print(f"Tabela '{SNAPSHOT_TABLE_NAME}' populada com o preço e status atuais dos itens.")
+    conexao.commit()
+    conexao.close()
+    print(f"[OK] Tabela '{NOME_TABELA_HISTORICO}' atualizada com sucesso.")
 
-# Função para listar aniversariantes com muitas vendas em janeiro de 2020
-def listar_aniversariantes_con_muchas_ventas_enero_2020(num_ventas):
-    """
-    Lista o nome e sobrenome dos usuários que fazem aniversário hoje
-    e cuja quantidade de vendas realizadas em janeiro de 2020 seja superior ao número dado.
-    """
-    conn = sqlite3.connect(DATABASE_NAME)
-    cursor = conn.cursor()
+# Lista clientes que fazem aniversário hoje e venderam muito em janeiro de 2020
+def listar_aniversariantes_com_muitas_vendas_jan2020(min_vendas):
+    conexao = sqlite3.connect(NOME_BANCO)
+    cursor = conexao.cursor()
 
     cursor.execute('''
         SELECT
@@ -75,40 +68,42 @@ def listar_aniversariantes_con_muchas_ventas_enero_2020(num_ventas):
             STRFTIME('%m-%d', c.data_nascimento) = STRFTIME('%m-%d', 'now')
             AND STRFTIME('%Y-%m', p.data_pedido) = '2020-01'
         GROUP BY
-            c.cliente_id, c.nome, c.sobrenome
+            c.cliente_id
         HAVING
             COUNT(p.pedido_id) > ?
-    ''', (num_ventas,))
-    aniversariantes_com_muitas_vendas = cursor.fetchall()
+    ''', (min_vendas,))
+    aniversariantes = cursor.fetchall()
 
-    print(f"\nUsuários que fazem aniversário hoje e tiveram mais de R$ {num_ventas} vendas em Janeiro de 2020:")
-    if aniversariantes_com_muitas_vendas:
-        for nome, sobrenome in aniversariantes_com_muitas_vendas:
-            print(f"- {nome} {sobrenome}")
+    print(f"\nClientes aniversariantes de hoje com mais de {min_vendas} vendas em Janeiro de 2020:")
+    if aniversariantes:
+        for nome, sobrenome in aniversariantes:
+            print(f"{nome} {sobrenome}")
     else:
-        print(f"Nenhum usuário encontrado com essas condições (aniversário hoje e mais de {num_ventas} vendas em Janeiro de 2020).")
+        print("Nenhum cliente encontrado com essas condições.")
 
-    conn.close()
+    conexao.close()
 
-# Função para listar o top 5 de vendedores da categoria 'Celulares' por mês em 2020
-def top_5_vendedores_celulares_por_mes_2020():
-    """
-    Lista o top 5 de vendedores da categoria 'Celulares' por faturamento em cada mês de 2020.
-    """
-    conn = sqlite3.connect(DATABASE_NAME)
-    cursor = conn.cursor()
-    
-    # criar a tabela ItemSnapshot se não existir
+# Exibe o top 5 vendedores de celulares por mês no ano de 2020
+def top_5_vendedores_celulares_2020():
+    conexao = sqlite3.connect(NOME_BANCO)
+    cursor = conexao.cursor()
+
+    meses_extenso = [
+        "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+        "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+    ]
+
     print("\nTop 5 vendedores da categoria 'Celulares' por mês em 2020:")
     for mes in range(1, 13):
-        ano_mes = f'2020-{mes:02d}'
+        mes_formatado = f'2020-{mes:02d}'
+        nome_mes = meses_extenso[mes - 1]
         cursor.execute('''
             SELECT
                 c.nome,
                 c.sobrenome,
-                COUNT(p.pedido_id) AS quantidade_vendas,
-                SUM(p.quantidade) AS quantidade_produtos_vendidos,
-                SUM(p.quantidade * p.preco_unitario) AS total_transacionado
+                COUNT(p.pedido_id) AS total_vendas,
+                SUM(p.quantidade) AS total_itens,
+                SUM(p.quantidade * p.preco_unitario) AS valor_total
             FROM
                 Cliente c
             JOIN
@@ -121,52 +116,51 @@ def top_5_vendedores_celulares_por_mes_2020():
                 STRFTIME('%Y-%m', p.data_pedido) = ?
                 AND cat.nome = 'Celulares'
             GROUP BY
-                c.cliente_id, c.nome, c.sobrenome
+                c.cliente_id
             ORDER BY
-                total_transacionado DESC
+                valor_total DESC
             LIMIT 5
-        ''', (ano_mes,))
-        top_vendedores = cursor.fetchall()
+        ''', (mes_formatado,))
+        resultados = cursor.fetchall()
 
-        if top_vendedores:
-            print(f"\nMês: {ano_mes}")
-            for nome, sobrenome, quant_vendas, quant_produtos, total in top_vendedores:
-                print(f"- {nome} {sobrenome}: {quant_vendas} vendas, {quant_produtos} produtos, Total: R${total:.2f}")
+        print(f"\n{nome_mes}:")
+        if resultados:
+            for nome, sobrenome, vendas, itens, total in resultados:
+                print(f"{nome} {sobrenome}: {vendas} vendas | {itens} itens | Total: R$ {total:.2f}")
         else:
-            print(f"\nMês: {ano_mes} - Nenhum vendedor na categoria 'Celulares'.")
+            print("Nenhum registro encontrado para este mês.")
 
-    conn.close()
+    conexao.close()
 
-# Função para exibir os dados da tabela ItemSnapshot
-def mostrar_item_snapshot():
-    """
-    Exibe os dados da tabela ItemSnapshot.
-    """
-    conn = sqlite3.connect(DATABASE_NAME)
-    cursor = conn.cursor()
+# Exibe os dados da tabela de histórico dos itens
+def mostrar_historico_itens():
+    conexao = sqlite3.connect(NOME_BANCO)
+    cursor = conexao.cursor()
 
     cursor.execute(f'''
-        SELECT
-            item_id,
-            data_atualizacao,
-            preco,
-            estado
-        FROM
-            {SNAPSHOT_TABLE_NAME}
+        SELECT item_id, data_atualizacao, preco, estado FROM {NOME_TABELA_HISTORICO}
     ''')
-    snapshot_data = cursor.fetchall()
+    registros = cursor.fetchall()
 
-    print(f"\nConteúdo da tabela '{SNAPSHOT_TABLE_NAME}':")
-    if snapshot_data:
-        for item_id, data_atualizacao, preco, estado in snapshot_data:
-            print(f"- Item ID: {item_id}, Data Atualização: {data_atualizacao}, Preço: R$ {preco}, Estado: {estado}")
+    print(f"\nDados da tabela '{NOME_TABELA_HISTORICO}':")
+    if registros:
+        for item_id, data, preco, estado in registros:
+            print(f"Item {item_id}: R$ {preco:.2f}, Status: {estado}, Atualizado em: {data}")
     else:
-        print("A tabela está vazia.")
+        print("Nenhum dado encontrado na tabela.")
 
-    conn.close()
+    conexao.close()
 
+# Execução principal
 if __name__ == '__main__':
-    listar_aniversariantes_con_muchas_ventas_enero_2020(1500)
-    top_5_vendedores_celulares_por_mes_2020()
-    povoar_item_snapshot()
-    mostrar_item_snapshot()
+    print("Verificando aniversariantes com muitas vendas...")
+    listar_aniversariantes_com_muitas_vendas_jan2020(1500)
+
+    print("\nGerando ranking de vendedores de celulares por mês...")
+    top_5_vendedores_celulares_2020()
+
+    print("\nAtualizando a tabela de histórico de itens...")
+    atualizar_historico_itens()
+
+    print("\nExibindo os dados atualizados da tabela de histórico:")
+    mostrar_historico_itens()
