@@ -9,11 +9,11 @@ Este projeto consiste em um conjunto de scripts Python e um script SQL para cria
 | Arquivo              | Descrição |
 |----------------------|-----------|
 | `criar_tabelas.py`   | Script Python para criar as tabelas no banco de dados SQLite (`desafio.db`). |
-| `inserir_dados.py`     | Script Python para inserir dados de exemplo nas tabelas do banco de dados. |
-| `respostas_negocio.py`         | Script Python para executar consultas SQL que respondem a perguntas de negócios específicas. |
-| `desafio.db`         | Arquivo SQLite gerado com os dados. |
-| `DER.md`         | representa as entidades (tabelas) e os relacionamentos entre elas. |
-
+| `inserir_dados.py`   | Script Python para inserir dados de exemplo nas tabelas do banco de dados. |
+| `respostas_negocio.py` | Script Python para executar consultas SQL que respondem a perguntas de negócios específicas. |
+| `desafio.db`| Arquivo SQLite gerado com os dados. |
+| `ER.md` | Modelo conceitual que representa entidades, seus atributos e os relacionamentos entre elas em um banco de dados. |
+| `DER.md`| Representação visual das entidades, atributos e relacionamentos de um banco de dados.|
 
 ## Tecnologias Utilizadas
 - **SQLite** — Banco de dados relacional leve e integrado
