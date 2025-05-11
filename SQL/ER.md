@@ -1,9 +1,14 @@
-# Diagrama Entidade-Relacionamento (DER). 
+# Entity-Relationship (ER)
 
-### Este DER representa as entidades (tabelas) e os relacionamentos entre elas.
+### Modelo conceitual que representa entidades, seus atributos e os relacionamentos entre elas em um banco de dados:
 ```
 erDiagram
-    Cliente ||--o{ Pedido : "realiza"
+    Cliente ||--o{ Pedido : "realiza"}
+    Cliente ||--o|{ AniversarioCliente : "aparece em (0 ou 1)"}
+    Categoria ||--o{ Item : "possui"}
+    Item ||--o{ Pedido : "é incluído em"}
+    Item ||--o{ HistoricoItemStatus : "tem histórico"}
+
     Cliente {
         INTEGER cliente_id PK
         TEXT    email UNIQUE NOT NULL
@@ -15,15 +20,12 @@ erDiagram
         TEXT    telefone
     }
 
-    Categoria ||--o{ Item : "pertence a"
     Categoria {
         INTEGER categoria_id PK
         TEXT    nome UNIQUE NOT NULL
         TEXT    caminho UNIQUE NOT NULL
     }
 
-    Item ||--o{ Pedido : "contém"
-    Item ||--o{ HistoricoItemStatus : "possui histórico"
     Item {
         INTEGER item_id PK
         TEXT    titulo NOT NULL
@@ -47,8 +49,8 @@ erDiagram
         INTEGER historico_id PK
         INTEGER item_id FK
         DATETIME data_atualizacao NOT NULL
-        REAL     preco NOT NULL
-        TEXT     estado
+        REAL    preco NOT NULL
+        TEXT    estado
     }
 
     AniversarioCliente {
@@ -57,7 +59,16 @@ erDiagram
         TEXT    sobrenome
         DATE    data_nascimento
     }
+```
 
-    Cliente }|..|{ AniversarioCliente : "view dos aniversariantes"
+```
+Relacionamentos:
+1. Cliente (1) ----> (N) Pedido
+2. Categoria (1) ----> (N) Item
+3. Item (1) ----> (N) Pedido
+4. Item (1) ----> (N) HistoricoItemStatus
+5. Cliente (1) ----> (0..1) AniversarioCliente (View)
+Um cliente pode ou não aparecer na view AniversarioCliente, dependendo se é aniversário dele hoje.
 
+Veja o arquivo DER.jpg para ver a representação visual das entidades, atributos e relacionamentos de um banco de dados - DER (Diagrama Entidade-Relacionamento).
 ```
